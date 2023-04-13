@@ -4,6 +4,19 @@
   
     
     <entry>
+      <title>个人ChatGPT的Web搭建</title>
+      <link href="/post/%E4%B8%AA%E4%BA%BAChatGPT%E7%9A%84Web%E6%90%AD%E5%BB%BA.html"/>
+      <url>/post/%E4%B8%AA%E4%BA%BAChatGPT%E7%9A%84Web%E6%90%AD%E5%BB%BA.html</url>
+      
+        <content type="html"><![CDATA[<h1 id="教学开始"><strong><em>教学开始</em></strong></h1><h2 id="前言">前言</h2><p><strong><em>本文引用了我是左风博主的教学博客<ahref="https://icloudnative.io/posts/build-chatgpt-web-using-laf/#%E5%89%8D%E7%AB%AF">点这到其博客相关文章</a></em></strong></p><p>OpenAI 已经公布了 ChatGPT 正式版 API，背后的新模型是gpt-3.5-turbo，这是 OpenAI目前最先进的模型，响应速度更快，价格更便宜。</p><p>作为开发人员，我们还是希望通过 API 将 ChatGPT和相关模型集成到自己的产品和应用中，尴尬的是，目前无法访问 ChatGPTAPI，原因大家都懂得。于是网上出现了各种各样的 API反代服务，我们可以直接通过反代服务来变相访问 ChatGPT API。</p><p>即使我们解决了 API 的访问问题，还要准备一个开发环境，比如对于 Node.js客户端来说，需要准备一个 Node.js 环境。</p><p>有没有一种简单快捷的方法来调用 ChatGPT API 呢？</p><p>那当然是用 Laf 了。</p><h2 id="云函数教学">云函数教学</h2><p>首先需要登录 laf.dev，然后新建一个应用。 <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-18-22-YLijVo.png" />点击开发按钮进入开发页面 <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-18-26-NMoDbR.png" />在 NPM 依赖面板中点击右上角的 + <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-09-23-29-wNbCOt.png" />然后输入 chatgpt 并回车进行搜索，选择第一个搜索结果，保存并重启 <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-09-23-30-ARz9Vu.png" />创建环境变量 <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-18-38-ydsD8h.png" />依次选择「环境变量」–&gt;「新增环境变量」，输入环境变量的名称和值，然后点击「确定」，再点击「更新」，便会重启应用<imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-18-46-Hr7VTk.png" />点击右上角运行 创建send函数输入</p><pre><code>import cloud from &#39;@lafjs/cloud&#39;export async function main(ctx: FunctionContext) &#123;  const &#123; ChatGPTAPI &#125; = await import(&#39;chatgpt&#39;)  const data = ctx.body  // 这里需要把 api 对象放入 cloud.shared 不然无法追踪上下文  let api = cloud.shared.get(&#39;api&#39;)  if (!api) &#123;    api = new ChatGPTAPI(&#123; apiKey: cloud.env.CHAT_GPT_API_KEY &#125;)    cloud.shared.set(&#39;api&#39;, api)  &#125;  let res  // 这里前端如果传过来 parentMessageId 则代表需要追踪上下文  if (!data.parentMessageId) &#123;    res = await api.sendMessage(data.message)  &#125; else &#123;    res = await api.sendMessage(data.message, &#123; parentMessageId: data.parentMessageId &#125;)  &#125;  return res&#125;</code></pre><h2 id="前端">前端</h2><p>到<ahref="https://github.com/zuoFeng59556/chatGPT/tree/feat-1">GitHub项目地址</a>下载前端文件本地运行</p><pre><code>npm inpm run dev</code></pre><p>试查看程序</p><h2 id="laf远程上线">laf远程上线</h2><p>打开你的 Laf，点击存储界面 –&gt; 点击上方加号 –&gt; 创建一个权限为readonly 的存储桶（名字随意） <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-19-09-hMcqZu.jpg" />创建完之后，在你的前端项目中运行打包命令。我这里用的是 npm run build。打包完毕之后找到打包好的 dist 文件夹，像我一样把 dist文件里面的所有东西都上传到我们刚刚创建的存储桶里面，记住是原封不动的上传哦，文件就是文件，文件夹就是文件夹。<imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-19-11-EE5Ld4.jpg" />上传完毕之后，发现右上角有一个 “开启网站托管”，点一下它！ <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-19-11-N0Ty0Z.jpg" />点完之后出来一个链接，我们点击一下访问网站 <imgsrc="https://jsdelivr.icloudnative.io/gh/yangchuansheng/imghosting5@main/uPic/2023-03-11-19-12-iBZITq.jpg" /></p><h2 id="个人项目示例">个人项目示例</h2><p><img src="/img/chatgpt1.png" /> <img src="/img/chatgpt2.png" /></p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>个人项目开发实录</title>
       <link href="/post/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91%E5%AE%9E%E5%BD%95.html"/>
       <url>/post/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91%E5%AE%9E%E5%BD%95.html</url>
